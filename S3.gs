@@ -133,14 +133,15 @@ S3.prototype.putObject = function (bucket, objectName, object, options) {
                       typeof object.getContentType == 'function'
                       );
   
-  //wrap object in a Blob if it doesn't appear to be one
   if (failedBlobDuckTest) {
-    object = Utilities.newBlob(JSON.stringify(object), "application/json");
-    object.setName(objectName);
+    // if not Blob, then it's supposed to be a json
+    request.setContent(JSON.stringify(object));
+    request.setContentType("application/json");
+  } else {
+    request.addHeader('Content-Encoding', 'base64');
+    request.setContent(Utilities.base64EncodeWebSafe(object.getBytes()));
+    request.setContentType(object.getContentType());
   }
-  
-  request.setContent(object.getDataAsString());
-  request.setContentType(object.getContentType());
   
   request.execute(options);  
 };
